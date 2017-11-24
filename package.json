@@ -1,0 +1,23 @@
+{
+  "name": "botbanking",
+  "version": "1.0.0",
+  "description": "Bot Banking for MSA",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjan957/botBanking.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cjan957/botBanking/issues"
+  },
+  "homepage": "https://github.com/cjan957/botBanking#readme",
+  "dependencies": {
+    "botbuilder": "^3.12.0",
+    "restify": "^6.3.4"
+  }
+}
