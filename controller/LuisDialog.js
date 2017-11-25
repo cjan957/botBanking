@@ -10,20 +10,28 @@ exports.startDialog = function (bot) {
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
-        var greetingSelector = randomNumber(0,3); //0 1 or 2
-        console.log('greetingSelector is : %d', greetingSelector);
-        switch(greetingSelector){
-            case 0:
-                var greetingMessage = "Hello there"
-                break;
-            case 1:
-                var greetingMessage = "Hi"
-                break;
-            case 2:
-                var greetingMessage = "Good evening"
-                break;
+        if(!checkIfEntityIsCurrency(session,args)){
+            var greetingSelector = randomNumber(0,3); //0 1 or 2
+            console.log('greetingSelector is : %d', greetingSelector);
+            switch(greetingSelector){
+                case 0:
+                    var greetingMessage = "Hello there"
+                    break;
+                case 1:
+                    var greetingMessage = "Hi"
+                    break;
+                case 2:
+                    var greetingMessage = "Good evening"
+                    break;
+            }
+            session.send(greetingMessage);
         }
-        session.send(greetingMessage);
+        else{
+            session.send(":(");
+            //session.endDialog();
+            session.beginDialog('orderCurrency');
+        }
+        
     }).triggerAction({
         matches: 'greeting'
     });
@@ -39,28 +47,20 @@ exports.startDialog = function (bot) {
         }
     ])
 
-    bot.dialog('orderCurrency', [function (session,args,next){
-        //Check if logged in
-        session.dialogData.args = args || {};
-        if(!session.conversationData["username"]){
-            session.beginDialog('authenticate');
-        }
-        else{
-            next();
-        }
-    },
-    function(session,results,next){
-        if(!session.conversationData["username"]){
-                session.send("Username was not found");
-        }
-        else{
-            var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
+    bot.dialog('orderCurrency', function (session,args,next){
+        var value;
+        var unit;
+
+        session.dialogData.args = args || {};    
+        var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
             if(currency){
-                var value = currency.resolution.value;
-                var unit = currency.resolution.unit;
+                value = currency.resolution.value;
+                unit = currency.resolution.unit;
 
                 if(value == null && unit != null){
-                    session.send("Please specify the amount of %s you want to order", unit);
+                    //session.send("Please specify the amount of %s you want to order", unit);
+                    session.conversationData["currency_symbol"] = unit;
+                    session.beginDialog('askForAmount');
                 }
                 else if(value != null && unit == null){
                     session.send("Please select the currency you want to buy from the options below");
@@ -71,21 +71,70 @@ exports.startDialog = function (bot) {
                 }
             }
             else{
-                session.send("put amount AND currency");
+                session.beginDialog('askForCurrency');
+                //unit = results.response;
+                //session.beginDialog('askForAmount');
+                //value = results.reponse;
             }
-        }
-    }]).triggerAction({
+    }).triggerAction({
         matches:'orderCurrency'
-    })
+    });
 
 
+    bot.dialog('askForAmount',[
+        function (session,results){
+            builder.Prompts.text(session, "Please enter the amount of %s you want to buy", session.conversationData["currency_symbol"]);
+        },
+        function(session,results){
+            session.conversationData["currency_amount"] = results.response;
+            session.endDialogWithResult(results);
+        }
+    ])
 
+
+    bot.dialog('askForCurrency', [
+        function (session, results){
+            console.log('in ask for currency');
+            var cardTitle = "What currency do you want to order?";
+            var card = createThumbnailCard(session, cardTitle);
+            var message = new builder.Message(session).addAttachment(card);
+            session.send(message);
+        },
+        function (session, results){
+            session.conversationData["currency_symbol"] = results.response;
+            session.beginDialog('askForAmount');
+        },
+        function(session,resuls){
+            session.endDialogWithResult(results);
+        }
+    ])
+
+    function createThumbnailCard(session, cardTitle){
+        return new builder.ThumbnailCard(session)
+            .title(cardTitle)
+            .buttons([
+                builder.CardAction.imBack(session,"Australian Dollar","Australian Dollar"),
+                builder.CardAction.imBack(session,"Thai Baht","Thai Baht")
+            ]);
+    }
 
     //random integer generator
     function randomNumber(min,max){
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max-min)) + min;
+    }
+
+
+    function checkIfEntityIsCurrency(session,args){
+        session.dialogData.args = args || {};  
+        var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
+        if(currency){
+            return 1;
+        }   
+        else{
+            return 0;
+        }     
     }
 
   
