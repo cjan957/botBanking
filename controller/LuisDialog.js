@@ -1,5 +1,6 @@
 //import botbuilder module
 var builder = require('botbuilder');
+var auth = require('./Authenticate');
 
 //make this function visible so that it can be called from app.js
 exports.startDialog = function (bot) {
@@ -27,6 +28,59 @@ exports.startDialog = function (bot) {
         matches: 'greeting'
     });
 
+
+    bot.dialog('authenticate',[
+        function (session){
+            builder.Prompts.text(session, "Please enter your username to continue");
+        },
+        function (session,results){
+            auth.authenticate(session, results.response); 
+            session.endDialog();
+        }
+    ])
+
+    bot.dialog('orderCurrency', [function (session,args,next){
+        //Check if logged in
+        session.dialogData.args = args || {};
+        if(!session.conversationData["username"]){
+            session.beginDialog('authenticate');
+        }
+        else{
+            next();
+        }
+    },
+    function(session,results,next){
+        if(!session.conversationData["username"]){
+                session.send("Username was not found");
+        }
+        else{
+            var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
+            if(currency){
+                var value = currency.resolution.value;
+                var unit = currency.resolution.unit;
+
+                if(value == null && unit != null){
+                    session.send("Please specify the amount of %s you want to order", unit);
+                }
+                else if(value != null && unit == null){
+                    session.send("Please select the currency you want to buy from the options below");
+                    session.send("xxxx,xxx");
+                }
+                else{
+                    session.send("So you would like to buy %s %s. Is this correct?", value,unit);
+                }
+            }
+            else{
+                session.send("put amount AND currency");
+            }
+        }
+    }]).triggerAction({
+        matches:'orderCurrency'
+    })
+
+
+
+
     //random integer generator
     function randomNumber(min,max){
         min = Math.ceil(min);
@@ -34,4 +88,5 @@ exports.startDialog = function (bot) {
         return Math.floor(Math.random() * (max-min)) + min;
     }
 
+  
 }

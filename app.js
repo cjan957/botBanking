@@ -20,8 +20,19 @@ server.post('/api/messages', connector.listen());
 
 // Receive messages from the user
 var bot = new builder.UniversalBot(connector, function (session) {
-    session.send('Sorry, I did not understand \'%s\'. Type \'help\' if you need assistance.', session.message.text);
+        session.send('Sorry, I did not understand \'%s\'. Type \'help\' if you need assistance.', session.message.text);
 });
+
+bot.on('conversationUpdate', function(message){
+    if(message.membersAdded){
+        message.membersAdded.forEach(function(identity){
+            if(identity.id === message.address.bot.id){
+                var reply = new builder.Message().address(message.address).text("Hi! I'm TT. I can currently help you with Account Summary, Ordering Foreign Currency and Managing appointments");
+                bot.send(reply);
+            }
+        });
+    }
+})
 
 // This line will call the function in your LuisDialog.js file
 luis.startDialog(bot);
