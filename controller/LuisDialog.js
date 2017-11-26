@@ -2,35 +2,21 @@
 var builder = require('botbuilder');
 var auth = require('./Authenticate');
 var account = require('./AccountSummary');
+var currencyQuery = require('./Currency');
 
 //make this function visible so that it can be called from app.js
 exports.startDialog = function (bot) {
     var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=e0f228eaadb545219d601b54398b824a&verbose=true&timezoneOffset=0&q=')
     bot.recognizer(recognizer);
 
-    /*
-    bot.dialog('firstRun', [
-        function(session,next){
-            session.userData.firstRun = true;
-            builder.Prompts.text(session, "Please enter your username to continue");
-        },
-        function(session,results){
-            session.conversationData.username = results.response;
-        }
-    ]).triggerAction({
-        onFindAction: function(context,callback){
-            if(!context.userData.firstRun){
-                callback(null, 1.1);
-            }
-            else{
-                callback(null, 0.0);
-            }
-        }    
-    });
-    */
 
-
-
+    bot.dialog('displayWelcome', function(session,args){
+        session.send("Hi! I'm TT. I can currently help you with Account Summary, Ordering Foreign Currency and Managing appointments");
+        session.endDialog();
+    }).triggerAction({
+        //This will be trigger from menu options only
+        matches: /^restartFromFailedUsername$/i
+    })
 
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
@@ -46,7 +32,7 @@ exports.startDialog = function (bot) {
                     var greetingMessage = "Hi"
                     break;
                 case 2:
-                    var greetingMessage = "Good evening"
+                    var greetingMessage = "Nice to be with you"
                     break;
             }
             session.send(greetingMessage);
@@ -156,6 +142,8 @@ exports.startDialog = function (bot) {
                 if(results.response.toLowerCase() == "yes"){
                     console.log(session.conversationData.username)
                     //session.send(session.conversationData.username);
+                    currencyQuery.queryExchangeRates(session, session.dialogData.currencyInfo.currency_symbol);
+
                     session.endDialog("OK order submitted");
 
                 }

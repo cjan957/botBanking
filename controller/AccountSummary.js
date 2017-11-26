@@ -26,12 +26,14 @@ function handleAccountSummaryData(message, session, username) {
         var titleMsg = "Hi, " + firstName + "";
         var subtitleMsg = username;
         var textMsg = "Your available balance: $" + accountBalance + "";
+        //NOTE: this image is free to be used/ modified
+        var imageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Bank_Creative_Tail.svg/128px-Bank_Creative_Tail.svg.png";
 
-        pushInfoToCard(session, titleMsg, subtitleMsg, textMsg, null);
+        pushInfoToCard(session, titleMsg, subtitleMsg, textMsg, imageUrl);
     }
     else{
         session.send("The username you provided could not be found");
-        session.endConversation("For security reason, please startover");
+        session.endConversation("For security reason, you will need to start over");
     }
 
     //session.send("%s, your favourite foods are: %s", username, allFoods);                
