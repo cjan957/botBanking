@@ -7,6 +7,30 @@ exports.startDialog = function (bot) {
     var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=e0f228eaadb545219d601b54398b824a&verbose=true&timezoneOffset=0&q=')
     bot.recognizer(recognizer);
 
+    /*
+    bot.dialog('firstRun', [
+        function(session,next){
+            session.userData.firstRun = true;
+            builder.Prompts.text(session, "Please enter your username to continue");
+        },
+        function(session,results){
+            session.conversationData.username = results.response;
+        }
+    ]).triggerAction({
+        onFindAction: function(context,callback){
+            if(!context.userData.firstRun){
+                callback(null, 1.1);
+            }
+            else{
+                callback(null, 0.0);
+            }
+        }    
+    });
+    */
+
+
+
+
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
@@ -42,16 +66,105 @@ exports.startDialog = function (bot) {
             builder.Prompts.text(session, "Please enter your username to continue");
         },
         function (session,results){
-            auth.authenticate(session, results.response); 
+            session.conversationData.username = results.response;
+            console.log("userdata should be saved");
             session.endDialog();
         }
-    ])
+    ]).triggerAction({
+        matches: 'authenticate'
+    });
 
-    bot.dialog('orderCurrency', function (session,args,next){
-        var value;
-        var unit;
 
-        session.dialogData.args = args || {};    
+    bot.dialog('accountSummary',[
+        function(session,args,next){
+            if(!session.conversationData.username){
+                console.log(session.conversationData.username);
+                session.beginDialog('authenticate');
+            }
+            else{
+                next();
+            }
+        },
+        function(session,args,next){
+            session.send("Account summary coming soon!");
+        }
+        
+    ]).triggerAction({
+        matches: 'accountSummary'
+    });
+
+    bot.dialog('orderCurrency', [
+        function(session,args,next){
+            session.dialogData.args = args || {};
+            if(!session.conversationData.username){
+                session.beginDialog('authenticate');
+            }
+            else{
+                next();
+            }
+        },
+        
+        function (session,args,next){
+            //var intent = args.intent;
+            //console.log(intent);
+            var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
+
+            //value = currency.resolution.value;
+            //unit = currency.resolution.unit;
+
+            var currencyInfo = session.dialogData.currencyInfo = {
+                currency_symbol: currency ? currency.resolution.unit : null,
+                currency_amount: currency ? currency.resolution.value : null,
+            };
+
+            if(!currencyInfo.currency_symbol){
+                session.beginDialog('askForCurrency');
+                //builder.Prompts.text(session,'Please specify the currency');
+            }
+            else{
+                next();
+            }
+        },
+        function(session,results,next){
+            var currencyInfo = session.dialogData.currencyInfo;
+            if(results.response){
+                currencyInfo.currency_symbol = results.response;
+            }
+            var unit = currencyInfo.currency_symbol;
+            if(!currencyInfo.currency_amount){
+                builder.Prompts.text(session,'How much would you like to order?');
+                session.send("Currency: %s", currencyInfo.currency_symbol);
+            }
+            else{
+                next();
+            }
+        },
+        function(session,results,next){
+            var currencyInfo = session.dialogData.currencyInfo;
+            if(results.response){
+                currencyInfo.currency_amount = results.response;
+            }
+            session.send("So you would like to order %s %s", currencyInfo.currency_symbol,currencyInfo.currency_amount);
+            builder.Prompts.text(session,'To confirm type "yes" or type "no" to cancel');
+            //session.send("So you would like to buy %s %s. Is this correct?", currencyInfo.currency_symbol,currencyInfo.currency_amount);
+        },
+        function(session,results){
+            if(results.response){
+                if(results.response.toLowerCase() == "yes"){
+                    console.log(session.conversationData.username)
+                    //session.send(session.conversationData.username);
+                    session.endDialog("OK order submitted");
+
+                }
+                else{
+                    session.send(session.conversationData.username);
+                    session.endDialog("OK Cancelled");
+
+                }
+            }
+        }
+
+        /*session.dialogData.args = args || {};    
         var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
             if(currency){
                 value = currency.resolution.value;
@@ -76,8 +189,10 @@ exports.startDialog = function (bot) {
                 //session.beginDialog('askForAmount');
                 //value = results.reponse;
             }
-    }).triggerAction({
-        matches:'orderCurrency'
+            */
+    ]).triggerAction({
+        matches:'orderCurrency',
+        confirmPrompt: "This will cancel the ordering of currency process. Are you sure?"
     });
 
 
@@ -93,21 +208,20 @@ exports.startDialog = function (bot) {
 
 
     bot.dialog('askForCurrency', [
-        function (session, results){
-            console.log('in ask for currency');
-            var cardTitle = "What currency do you want to order?";
-            var card = createThumbnailCard(session, cardTitle);
-            var message = new builder.Message(session).addAttachment(card);
-            session.send(message);
+        function (session){            
+            builder.Prompts.text(session, "What currency do you want to order?");
+            session.send("For more info on what currencies are avaiable to be ordered. Type Help");
         },
         function (session, results){
-            session.conversationData["currency_symbol"] = results.response;
-            session.beginDialog('askForAmount');
-        },
-        function(session,resuls){
             session.endDialogWithResult(results);
-        }
+        },
     ])
+    .beginDialogAction('askCurrencyHelpAction', 'askCurrency_Help', {matches: /^help$/i});
+
+    bot.dialog('askCurrency_Help', function(session,args,next){
+        var msg = "Supported currencies are : THB, USD, AUD etc";
+        session.endDialog(msg);
+    })
 
     function createThumbnailCard(session, cardTitle){
         return new builder.ThumbnailCard(session)

@@ -36,5 +36,7 @@ bot.on('conversationUpdate', function(message){
     }
 })
 
+//bot.set('persistUserData', false);
+
 // This line will call the function in your LuisDialog.js file
 luis.startDialog(bot);
