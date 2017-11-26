@@ -1,6 +1,7 @@
 //import botbuilder module
 var builder = require('botbuilder');
 var auth = require('./Authenticate');
+var account = require('./AccountSummary');
 
 //make this function visible so that it can be called from app.js
 exports.startDialog = function (bot) {
@@ -86,7 +87,12 @@ exports.startDialog = function (bot) {
             }
         },
         function(session,args,next){
-            session.send("Account summary coming soon!");
+            session.send("Please wait, retrieving your account...");
+            session.sendTyping();
+            account.displayAccountInfo(session,session.conversationData.username);
+
+            
+
         }
         
     ]).triggerAction({
