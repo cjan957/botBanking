@@ -87,12 +87,9 @@ exports.startDialog = function (bot) {
             }
         },
         function(session,args,next){
-            session.send("Please wait, retrieving your account...");
+            //session.send("Please wait while we are retrieving your account..");
             session.sendTyping();
             account.displayAccountInfo(session,session.conversationData.username);
-
-            
-
         }
         
     ]).triggerAction({

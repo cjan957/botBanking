@@ -23,13 +23,13 @@ exports.checkUsername = function checkUsername(session, url, username){
     //return result;
 }
 
-exports.getAccount = function getAccount(session,url,username,callback){
+exports.getAccount = function getAccount(session, url, username, callback){
     request.get(url,{'headers':{'ZUMO-API-VERSION': '2.0.0'}}, function getResponse(err,res,body){
         if(err){
             console.log(err);
         }
         else{
-            callback();
+            callback(body,session,username);
         }
     })
 }
