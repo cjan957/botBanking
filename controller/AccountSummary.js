@@ -36,6 +36,7 @@ function determineID(message, session, username){
             updatedBalance = Number(Math.round(updatedBalance+'e2')+'e-2');   
             rest.updateAccount(session,url,accountID,updatedBalance,displayDeductedResult);
             session.send("All done! You will receive an email within 5 business days when your order is ready.");
+            session.send("I'm still learning and want to know what you think! Type 'feedback' anytime to send a feedback :) ");
             session.endDialog();
         }
         else{

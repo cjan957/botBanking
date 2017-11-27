@@ -3,6 +3,7 @@ var builder = require('botbuilder');
 var auth = require('./Authenticate');
 var account = require('./AccountSummary');
 var currencyQuery = require('./Currency');
+var text = require('./TextAnalyse');
 
 //make this function visible so that it can be called from app.js
 exports.startDialog = function (bot) {
@@ -221,29 +222,58 @@ exports.startDialog = function (bot) {
     })
 
     bot.dialog('askForCurrency', [
-        function (session){
+        function (session,args,next){
+            builder.Prompts.text(session, "Please select a currency from the menu");
             var card = createThumbnailCard(session, "What currency do you want?");
             var respondToUser = new builder.Message(session).addAttachment(card);            
             session.send(respondToUser);            
-            builder.Prompts.text(session, "Want something other than AUD, EUR, JPN or USD? Please use our internet banking to place your order.");
         },
         function (session, results){
-            session.endDialogWithResult(results);
+            if(results.response == "AUD" || results.response == "EUR" || results.response == "JPY" || results.response == "USD"){
+                session.endDialogWithResult(results);   
+            }
+            else{
+                session.replaceDialog('askForCurrency',{reprompt : true});
+            }
         },
     ]).beginDialogAction('askCurrencyHelpAction', 'askCurrency_Help', {matches: /^help$/i});
 
     bot.dialog('askCurrency_Help', function(session,args,next){
-        var msg = "Supported currencies are : THB, USD, AUD etc";
+        var msg = "Want something other than AUD, EUR, JPY or USD? Please use our internet banking to place your order.";
         session.endDialog(msg);
+    })
+
+
+    bot.dialog('feedback', [
+        function(session,args,next){
+            if(!session.conversationData.username){
+                console.log(session.conversationData.username);
+                session.beginDialog('authenticate');
+            }
+            else{
+                next();
+            }
+        },
+        function(session,next){
+            builder.Prompts.text(session, "What do you think of TT?");
+        },
+        function(session,results){
+            var username = session.conversationData.username;
+            if(results.response){
+                text.textAnalyse(session,username,results.response);
+            }
+        } 
+    ]).triggerAction({
+        matches: /^feedback$/i
     })
 
     function createThumbnailCard(session, cardTitle){
         return new builder.ThumbnailCard(session)
             .title(cardTitle)
             .buttons([
-                builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)","AUD"),
+                builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)"),
                 builder.CardAction.imBack(session,"EUR","Euro (EUR)"),
-                builder.CardAction.imBack(session,"JPN","Japanese Yen (JPY)"),                
+                builder.CardAction.imBack(session,"JPY","Japanese Yen (JPY)"),                
                 builder.CardAction.imBack(session,"USD","US Dollar (USD)")        
             ]);
     }
