@@ -27,6 +27,20 @@ exports.startDialog = function (bot) {
         matches: /^receipt$/i
     })
 
+    bot.dialog('help', function(session,args){
+        session.send("Things you can tell me... \n\n **My Account Summary** \n\n **I want to order foreign currency**");
+        session.endDialog();
+    }).triggerAction({
+        matches: /^help$/i
+    })
+
+    bot.dialog('restart', function(session,args){
+        session.endConversation();
+    }).triggerAction({
+        //This will be trigger from menu options only
+        matches: /^restart$/i
+    })
+
 
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
@@ -104,12 +118,7 @@ exports.startDialog = function (bot) {
         },
         
         function (session,args,next){
-            //var intent = args.intent;
-            //console.log(intent);
             var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
-
-            //value = currency.resolution.value;
-            //unit = currency.resolution.unit;
 
             var currencyInfo = session.dialogData.currencyInfo = {
                 currency_symbol: currency ? currency.resolution.unit : null,
@@ -131,8 +140,7 @@ exports.startDialog = function (bot) {
             }
             var unit = currencyInfo.currency_symbol;
             if(!currencyInfo.currency_amount){
-                builder.Prompts.text(session,'How much would you like to order?');
-                session.send("Currency: %s", currencyInfo.currency_symbol);
+                builder.Prompts.text(session,'Ok, how much do you need?');
             }
             else{
                 next();
@@ -147,9 +155,11 @@ exports.startDialog = function (bot) {
             session.conversationData.currencySymbol = currencyInfo.currency_symbol;
             session.conversationData.currencyAmount = currencyInfo.currency_amount;
 
-            currencyQuery.queryExchangeRates(session, session.conversationData.currencySymbol, session.conversationData.currencyAmount);    
             session.sendTyping();
-            builder.Prompts.text(session, 'Generating your order..');
+            builder.Prompts.text(session, "Let me put everything together..");
+            
+            currencyQuery.queryExchangeRates(session, session.conversationData.currencySymbol, session.conversationData.currencyAmount);    
+            
         },
         function(session,results){
             if(results.response){
@@ -160,12 +170,8 @@ exports.startDialog = function (bot) {
                     console.log(session.conversationData.currencySymbol);
                     console.log(session.conversationData.currencyAmount);
 
+                    session.sendTyping();
                     account.getAccountBalanceAndUpdateBalance(session,session.conversationData.username);
-                    //session.send(session.conversationData.username);
-                    //currencyQuery.queryExchangeRates(session, session.dialogData.currencyInfo.currency_symbol);
-
-                    session.endDialog("OK order submitted");
-
                 }
                 else{
                     session.send(session.conversationData.username);
@@ -180,34 +186,12 @@ exports.startDialog = function (bot) {
         confirmPrompt: "This will cancel the ordering of currency process. Are you sure?"
     });
 
-
-    bot.dialog('askForAmount',[
-        function (session,results){
-            builder.Prompts.text(session, "Please enter the amount of %s you want to buy", session.conversationData["currency_symbol"]);
-        },
-        function(session,results){
-            session.conversationData["currency_amount"] = results.response;
-            session.endDialogWithResult(results);
-        }
-    ])
-
-
-    bot.dialog('waitForData', [
-        function (session,results,next){
-            currencyQuery.queryExchangeRates(session, session.conversationData.currencySymbol, session.conversationData.currencyAmount);    
-        },
-        function(session,results){
-            session.endDialog();
-        }
-    ]).triggerAction({
-        mathces: 'waitForData'
-    })
-
-
     bot.dialog('askForCurrency', [
-        function (session){            
-            builder.Prompts.text(session, "What currency do you want to order?");
-            session.send("For more info on what currencies are avaiable to be ordered. Type Help");
+        function (session){
+            var card = createThumbnailCard(session, "What currency do you want?");
+            var respondToUser = new builder.Message(session).addAttachment(card);            
+            session.send(respondToUser);            
+            builder.Prompts.text(session, "Want something other than AUD, JPN, GBP or USD? Use our internet banking website to place your order.");
         },
         function (session, results){
             session.endDialogWithResult(results);
@@ -224,8 +208,11 @@ exports.startDialog = function (bot) {
         return new builder.ThumbnailCard(session)
             .title(cardTitle)
             .buttons([
-                builder.CardAction.imBack(session,"Australian Dollar","Australian Dollar"),
-                builder.CardAction.imBack(session,"Thai Baht","Thai Baht")
+                builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)","AUD"),
+                builder.CardAction.imBack(session,"JPN","Japanese Yen (JPY)"),                
+                builder.CardAction.imBack(session,"GBP","Pound Sterling (GBP)"),
+                builder.CardAction.imBack(session,"USD","US Dollar (USD)")
+                
             ]);
     }
 
@@ -251,10 +238,10 @@ exports.startDialog = function (bot) {
 
     function createReceiptCard(session){
         return new builder.ReceiptCard(session)
-        .title('John Doe')
+        .title('Your Order')
         .facts([
-            builder.Fact.create(session, '1234', 'Order Number'),
-            builder.Fact.create(session, 'VISA 5555-****', 'Payment Method')
+            builder.Fact.create(session, '1234', 'Currency'),
+            builder.Fact.create(session, 'VISA 5555-****', "Today's exchange rate")
         ])
         .items([
             builder.ReceiptItem.create(session, '$ 38.45', 'Data Transfer')
@@ -264,7 +251,6 @@ exports.startDialog = function (bot) {
                 .quantity(720)
                 .image(builder.CardImage.create(session, 'https://github.com/amido/azure-vector-icons/raw/master/renders/cloud-service.png'))
         ])
-        .tax('$ 7.50')
         .total('$ 90.95')
         .buttons([
             builder.CardAction.openUrl(session, 'https://azure.microsoft.com/en-us/pricing/', 'More Information')

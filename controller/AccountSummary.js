@@ -27,16 +27,25 @@ function determineID(message, session, username){
         }
     }
     if(accountID){
+        var fees = 5;     
+        currentBalance = Number(Math.round(currentBalance+'e2')+'e-2');  
+        amountToDeduct = Number(Math.round(session.conversationData.amountToDeduct+'e2')+'e-2');  
+        
         if(currentBalance > session.conversationData.amountToDeduct + 5){
-            var updatedBalance = currentBalance - (session.conversationData.amountToDeduct + 5);
+            var updatedBalance = currentBalance - (amountToDeduct + fees);
+            updatedBalance = Number(Math.round(updatedBalance+'e2')+'e-2');   
             rest.updateAccount(session,url,accountID,updatedBalance,displayDeductedResult);
+            session.send("All done! You will receive an email within 5 business days when your order is ready.");
+            session.endDialog();
         }
         else{
-            session.send("not enough fund");
+            session.send("Sorry, you do not have sufficient fund to complete this order. \n\n Your available Balance: **$ " + currentBalance + "** \n\n Amount to be deducted: **$ " + (amountToDeduct + fees) + "** ");
+            session.endDialog();
         }
     }
     else{
-        session.send("no account found");
+        session.send("The username you provided could not be found");
+        session.endConversation("For security reason, you will need to start over");
     }
 }
 
@@ -61,6 +70,7 @@ function handleAccountSummaryData(message, session, username) {
     }
 
     if(found){
+        accountBalance = Number(Math.round(accountBalance+'e2')+'e-2');
         var titleMsg = "Hi, " + firstName + "";
         var subtitleMsg = username;
         var textMsg = "Your available balance: $" + accountBalance + "";
