@@ -45,32 +45,23 @@ exports.startDialog = function (bot) {
         matches: /^restart$/i
     })
 
-
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
-        if(!checkIfEntityIsCurrency(session,args)){
-            var greetingSelector = randomNumber(0,3); //0 1 or 2
-            console.log('greetingSelector is : %d', greetingSelector);
-            switch(greetingSelector){
-                case 0:
-                    var greetingMessage = "Hello there"
-                    break;
-                case 1:
-                    var greetingMessage = "Hi"
-                    break;
-                case 2:
-                    var greetingMessage = "Nice talking to you"
-                    break;
+        var greetingSelector = randomNumber(0,3); //0 1 or 2
+        console.log('greetingSelector is : %d', greetingSelector);
+        switch(greetingSelector){
+            case 0:
+                var greetingMessage = "Hello there"
+                break;
+            case 1:
+                var greetingMessage = "Hi"
+                break;
+            case 2:
+                var greetingMessage = "Nice talking to you"
+                break;
             }
             session.send(greetingMessage);
-        }
-        else{
-            session.send(":(");
-            //session.endDialog();
-            session.beginDialog('orderCurrency');
-        }
-        
     }).triggerAction({
         matches: 'greeting'
     });
@@ -146,10 +137,6 @@ exports.startDialog = function (bot) {
                     currencyInfo.currency_symbol = "EUR";
                     next();
                 }
-                else if(currencyInfo.currency_symbol == "Pound"){
-                    currencyInfo.currency_symbol = "GBP";
-                    next();
-                }
                 else if(currencyInfo.currency_symbol == "Australian dollar"){
                     currencyInfo.currency_symbol = "AUD";
                     next();
@@ -166,7 +153,8 @@ exports.startDialog = function (bot) {
             }
             var unit = currencyInfo.currency_symbol;
             if(!currencyInfo.currency_amount){
-                builder.Prompts.text(session,'OK, how much do you need?');
+                session.beginDialog('askHowMuch');
+                //builder.Prompts.text(session,'OK, how much do you need?');
             }
             else{
                 next();
@@ -208,20 +196,41 @@ exports.startDialog = function (bot) {
     ]).triggerAction({
         matches:'orderCurrency',
         confirmPrompt: "This will cancel the ordering of currency process. Are you sure?"
-    });
+    })
+
+    bot.dialog('askHowMuch', [
+        function(session,args,next){
+            if(args && args.reprompt){
+                builder.Prompts.text(session, "Please specify how much (in numbers) you need without any symbols (. or , or $ etc)");
+            }
+            else{
+                builder.Prompts.text(session,"OK, how much do you need?");
+            }
+        },
+        function(session,results){
+            var matched = results.response.match(/^\d+$/);
+            if(matched){
+                session.endDialogWithResult(results);
+            }
+            else{
+                session.replaceDialog('askHowMuch',{reprompt : true});
+            }
+        }
+    ]).triggerAction({
+        matches: 'askHowMuch'
+    })
 
     bot.dialog('askForCurrency', [
         function (session){
             var card = createThumbnailCard(session, "What currency do you want?");
             var respondToUser = new builder.Message(session).addAttachment(card);            
             session.send(respondToUser);            
-            builder.Prompts.text(session, "Want something other than AUD, EUR, JPN, GBP or USD? Please use our internet banking to place your order.");
+            builder.Prompts.text(session, "Want something other than AUD, EUR, JPN or USD? Please use our internet banking to place your order.");
         },
         function (session, results){
             session.endDialogWithResult(results);
         },
-    ])
-    .beginDialogAction('askCurrencyHelpAction', 'askCurrency_Help', {matches: /^help$/i});
+    ]).beginDialogAction('askCurrencyHelpAction', 'askCurrency_Help', {matches: /^help$/i});
 
     bot.dialog('askCurrency_Help', function(session,args,next){
         var msg = "Supported currencies are : THB, USD, AUD etc";
@@ -235,7 +244,6 @@ exports.startDialog = function (bot) {
                 builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)","AUD"),
                 builder.CardAction.imBack(session,"EUR","Euro (EUR)"),
                 builder.CardAction.imBack(session,"JPN","Japanese Yen (JPY)"),                
-                builder.CardAction.imBack(session,"GBP","Pound Sterling (GBP)"),
                 builder.CardAction.imBack(session,"USD","US Dollar (USD)")        
             ]);
     }

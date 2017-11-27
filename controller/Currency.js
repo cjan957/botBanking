@@ -28,13 +28,10 @@ function getRate(session, symbol, amount, apiResponse){
     else if(symbol.toLowerCase() == "eur"){
         rateValue = rate.EUR;
     }
-    else if(symbol.toLowerCase() == "gbp"){
-        rateValue = rate.GBP;
-    }
     else if(symbol.toLowerCase() == "aud"){
         rateValue = rate.AUD;
     }
-    
+
     session.conversationData.rates = rateValue;
     confirmExchangeOrder(session, symbol, amount, rateValue, session.conversationData.username);
 };
