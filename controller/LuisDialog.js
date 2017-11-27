@@ -130,19 +130,29 @@ exports.startDialog = function (bot) {
         },
         function(session,results,next){
             var currencyInfo = session.dialogData.currencyInfo;
+            var been = false;
             if(results.response){
                 currencyInfo.currency_amount = results.response;
             }
-            session.send("So you would like to order %s %s", currencyInfo.currency_symbol,currencyInfo.currency_amount);
-            builder.Prompts.text(session,'To confirm type "yes" or type "no" to cancel');
-            //session.send("So you would like to buy %s %s. Is this correct?", currencyInfo.currency_symbol,currencyInfo.currency_amount);
+            session.conversationData.currencySymbol = currencyInfo.currency_symbol;
+            session.conversationData.currencyAmount = currencyInfo.currency_amount;
+
+            currencyQuery.queryExchangeRates(session, session.conversationData.currencySymbol, session.conversationData.currencyAmount);    
+            session.sendTyping();
+            builder.Prompts.text(session, 'Generating your order..');
         },
         function(session,results){
             if(results.response){
-                if(results.response.toLowerCase() == "yes"){
+                console.log(results.response);
+                if(results.response.toLowerCase() == "confirm"){
                     console.log(session.conversationData.username)
+
+                    console.log(session.conversationData.currencySymbol);
+                    console.log(session.conversationData.currencyAmount);
+
+                    account.getAccountBalanceAndUpdateBalance(session,session.conversationData.username);
                     //session.send(session.conversationData.username);
-                    currencyQuery.queryExchangeRates(session, session.dialogData.currencyInfo.currency_symbol);
+                    //currencyQuery.queryExchangeRates(session, session.dialogData.currencyInfo.currency_symbol);
 
                     session.endDialog("OK order submitted");
 
@@ -155,32 +165,6 @@ exports.startDialog = function (bot) {
             }
         }
 
-        /*session.dialogData.args = args || {};    
-        var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
-            if(currency){
-                value = currency.resolution.value;
-                unit = currency.resolution.unit;
-
-                if(value == null && unit != null){
-                    //session.send("Please specify the amount of %s you want to order", unit);
-                    session.conversationData["currency_symbol"] = unit;
-                    session.beginDialog('askForAmount');
-                }
-                else if(value != null && unit == null){
-                    session.send("Please select the currency you want to buy from the options below");
-                    session.send("xxxx,xxx");
-                }
-                else{
-                    session.send("So you would like to buy %s %s. Is this correct?", value,unit);
-                }
-            }
-            else{
-                session.beginDialog('askForCurrency');
-                //unit = results.response;
-                //session.beginDialog('askForAmount');
-                //value = results.reponse;
-            }
-            */
     ]).triggerAction({
         matches:'orderCurrency',
         confirmPrompt: "This will cancel the ordering of currency process. Are you sure?"
@@ -196,6 +180,18 @@ exports.startDialog = function (bot) {
             session.endDialogWithResult(results);
         }
     ])
+
+
+    bot.dialog('waitForData', [
+        function (session,results,next){
+            currencyQuery.queryExchangeRates(session, session.conversationData.currencySymbol, session.conversationData.currencyAmount);    
+        },
+        function(session,results){
+            session.endDialog();
+        }
+    ]).triggerAction({
+        mathces: 'waitForData'
+    })
 
 
     bot.dialog('askForCurrency', [
@@ -240,6 +236,39 @@ exports.startDialog = function (bot) {
         else{
             return 0;
         }     
+    }
+
+
+    bot.dialog('receipt', function(session,args){
+        var card = createReceiptCard(session);
+        var responseToUser = new builder.Message(session).addAttachment(card);
+        session.send(responseToUser).endDialog();
+    }).triggerAction({
+        //This will be trigger from menu options only
+        mathces: /^secretCodeABC123C$/i
+    })
+
+    function createReceiptCard(session){
+        return new builder.ReceiptCard(session)
+        .title('John Doe')
+        .facts([
+            builder.Fact.create(session, '1234', 'Order Number'),
+            builder.Fact.create(session, 'VISA 5555-****', 'Payment Method')
+        ])
+        .items([
+            builder.ReceiptItem.create(session, '$ 38.45', 'Data Transfer')
+                .quantity(368)
+                .image(builder.CardImage.create(session, 'https://github.com/amido/azure-vector-icons/raw/master/renders/traffic-manager.png')),
+            builder.ReceiptItem.create(session, '$ 45.00', 'App Service')
+                .quantity(720)
+                .image(builder.CardImage.create(session, 'https://github.com/amido/azure-vector-icons/raw/master/renders/cloud-service.png'))
+        ])
+        .tax('$ 7.50')
+        .total('$ 90.95')
+        .buttons([
+            builder.CardAction.openUrl(session, 'https://azure.microsoft.com/en-us/pricing/', 'More Information')
+                .image('https://raw.githubusercontent.com/amido/azure-vector-icons/master/renders/microsoft-azure.png')
+        ]);
     }
 
   

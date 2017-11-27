@@ -6,6 +6,44 @@ exports.displayAccountInfo = function getAccountInfo(session,username){
     rest.getAccount(session,url,username,handleAccountSummaryData);
 }
 
+
+exports.getAccountBalanceAndUpdateBalance = function getAccountBalance(session,username){
+    var url = 'https://contosobotbankingmobile.azurewebsites.net/tables/customer';
+    rest.getAccount(session,url,username,determineID);
+}
+
+function determineID(message, session, username){
+    var accountID;
+    var currentBalance;
+    var url = 'https://contosobotbankingmobile.azurewebsites.net/tables/customer';
+
+    var userList = JSON.parse(message);
+    for(var index in userList){
+        var usernameReceived = userList[index].username;
+        if(username.toLowerCase() === usernameReceived.toLowerCase()){
+            accountID = userList[index].id;
+            currentBalance = userList[index].balance;
+            break;
+        }
+    }
+    if(accountID){
+        if(currentBalance > session.conversationData.amountToDeduct + 5){
+            var updatedBalance = currentBalance - (session.conversationData.amountToDeduct + 5);
+            rest.updateAccount(session,url,accountID,updatedBalance,displayDeductedResult);
+        }
+        else{
+            session.send("not enough fund");
+        }
+    }
+    else{
+        session.send("no account found");
+    }
+}
+
+function displayDeductedResult(message,session,username){
+    session.send("balance deducted successfully");
+}
+
 function handleAccountSummaryData(message, session, username) {
     var firstName; 
     var accountBalance;
@@ -45,6 +83,8 @@ function pushInfoToCard(session, cardTitle, subtitle, message, imageURL){
     var responseToUser = new builder.Message(session).addAttachment(card);
     session.send(responseToUser).endDialog();
 }
+
+
 
 
 function createThumbnailCard(session, cardTitle,subtitle, message, imageURL){
