@@ -18,6 +18,16 @@ exports.startDialog = function (bot) {
         matches: /^restartFromFailedUsername$/i
     })
 
+    bot.dialog('receipt', function(session,args){
+        var card = createReceiptCard(session);
+        var responseToUser = new builder.Message(session).addAttachment(card);
+        session.send(responseToUser).endDialog();
+    }).triggerAction({
+        //This will be trigger from menu options only
+        matches: /^receipt$/i
+    })
+
+
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
@@ -238,15 +248,6 @@ exports.startDialog = function (bot) {
         }     
     }
 
-
-    bot.dialog('receipt', function(session,args){
-        var card = createReceiptCard(session);
-        var responseToUser = new builder.Message(session).addAttachment(card);
-        session.send(responseToUser).endDialog();
-    }).triggerAction({
-        //This will be trigger from menu options only
-        mathces: /^secretCodeABC123C$/i
-    })
 
     function createReceiptCard(session){
         return new builder.ReceiptCard(session)
