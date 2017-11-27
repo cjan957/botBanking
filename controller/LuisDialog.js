@@ -10,7 +10,7 @@ exports.startDialog = function (bot) {
     //var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=e0f228eaadb545219d601b54398b824a&verbose=true&timezoneOffset=0&q=')
     
     //freetrial 
-    var recognizer = new builder.LuisRecognizer('https://southeastasia.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=38af2bf700964332a6ea1874dca72a77&verbose=true&timezoneOffset=0&q=')
+    var recognizer = new builder.LuisRecognizer('https://southeastasia.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=38af2bf700964332a6ea1874dca72a77&spellCheck=true&timezoneOffset=0&q=')
     bot.recognizer(recognizer);
 
 
@@ -60,7 +60,7 @@ exports.startDialog = function (bot) {
                     var greetingMessage = "Hi"
                     break;
                 case 2:
-                    var greetingMessage = "Nice to be with you"
+                    var greetingMessage = "Nice talking to you"
                     break;
             }
             session.send(greetingMessage);
@@ -131,10 +131,32 @@ exports.startDialog = function (bot) {
 
             if(!currencyInfo.currency_symbol){
                 session.beginDialog('askForCurrency');
-                //builder.Prompts.text(session,'Please specify the currency');
             }
             else{
-                next();
+                //Check entities from LUIS and convert to the format bot code understands
+                if(currencyInfo.currency_symbol == "United States dollar"){
+                    currencyInfo.currency_symbol = "USD";
+                    next();
+                }
+                else if(currencyInfo.currency_symbol == "Japanese yen"){
+                    currencyInfo.currency_symbol = "JPY";
+                    next();
+                }
+                else if(currencyInfo.currency_symbol == "Euro"){
+                    currencyInfo.currency_symbol = "EUR";
+                    next();
+                }
+                else if(currencyInfo.currency_symbol == "Pound"){
+                    currencyInfo.currency_symbol = "GBP";
+                    next();
+                }
+                else if(currencyInfo.currency_symbol == "Australian dollar"){
+                    currencyInfo.currency_symbol = "AUD";
+                    next();
+                }
+                else if(currencyInfo.currency_symbol != null){
+                    session.endDialog("I'm sorry but " +  currencyInfo.currency_symbol + " is not currently supported here. Please order it on our internet banking site");
+                }
             }
         },
         function(session,results,next){
@@ -144,7 +166,7 @@ exports.startDialog = function (bot) {
             }
             var unit = currencyInfo.currency_symbol;
             if(!currencyInfo.currency_amount){
-                builder.Prompts.text(session,'Ok, how much do you need?');
+                builder.Prompts.text(session,'OK, how much do you need?');
             }
             else{
                 next();
@@ -178,9 +200,7 @@ exports.startDialog = function (bot) {
                     account.getAccountBalanceAndUpdateBalance(session,session.conversationData.username);
                 }
                 else{
-                    session.send(session.conversationData.username);
-                    session.endDialog("OK Cancelled");
-
+                    session.endDialog("Ok, I cancelled your order.");
                 }
             }
         }
@@ -195,7 +215,7 @@ exports.startDialog = function (bot) {
             var card = createThumbnailCard(session, "What currency do you want?");
             var respondToUser = new builder.Message(session).addAttachment(card);            
             session.send(respondToUser);            
-            builder.Prompts.text(session, "Want something other than AUD, JPN, GBP or USD? Use our internet banking website to place your order.");
+            builder.Prompts.text(session, "Want something other than AUD, EUR, JPN, GBP or USD? Please use our internet banking to place your order.");
         },
         function (session, results){
             session.endDialogWithResult(results);
@@ -213,10 +233,10 @@ exports.startDialog = function (bot) {
             .title(cardTitle)
             .buttons([
                 builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)","AUD"),
+                builder.CardAction.imBack(session,"EUR","Euro (EUR)"),
                 builder.CardAction.imBack(session,"JPN","Japanese Yen (JPY)"),                
                 builder.CardAction.imBack(session,"GBP","Pound Sterling (GBP)"),
-                builder.CardAction.imBack(session,"USD","US Dollar (USD)")
-                
+                builder.CardAction.imBack(session,"USD","US Dollar (USD)")        
             ]);
     }
 
@@ -226,41 +246,5 @@ exports.startDialog = function (bot) {
         max = Math.floor(max);
         return Math.floor(Math.random() * (max-min)) + min;
     }
-
-
-    function checkIfEntityIsCurrency(session,args){
-        session.dialogData.args = args || {};  
-        var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
-        if(currency){
-            return 1;
-        }   
-        else{
-            return 0;
-        }     
-    }
-
-
-    function createReceiptCard(session){
-        return new builder.ReceiptCard(session)
-        .title('Your Order')
-        .facts([
-            builder.Fact.create(session, '1234', 'Currency'),
-            builder.Fact.create(session, 'VISA 5555-****', "Today's exchange rate")
-        ])
-        .items([
-            builder.ReceiptItem.create(session, '$ 38.45', 'Data Transfer')
-                .quantity(368)
-                .image(builder.CardImage.create(session, 'https://github.com/amido/azure-vector-icons/raw/master/renders/traffic-manager.png')),
-            builder.ReceiptItem.create(session, '$ 45.00', 'App Service')
-                .quantity(720)
-                .image(builder.CardImage.create(session, 'https://github.com/amido/azure-vector-icons/raw/master/renders/cloud-service.png'))
-        ])
-        .total('$ 90.95')
-        .buttons([
-            builder.CardAction.openUrl(session, 'https://azure.microsoft.com/en-us/pricing/', 'More Information')
-                .image('https://raw.githubusercontent.com/amido/azure-vector-icons/master/renders/microsoft-azure.png')
-        ]);
-    }
-
-  
+ 
 }

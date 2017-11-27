@@ -18,15 +18,24 @@ function getRate(session, symbol, amount, apiResponse){
 
     if(symbol.toLowerCase() == "thb"){
         rateValue = rate.THB;
-        session.conversationData.rates = rateValue;
     }
-    else{
+    else if(symbol.toLowerCase() == "usd"){
+        rateValue = rate.USD;
+    }
+    else if(symbol.toLowerCase() == "jpy"){
+        rateValue = rate.JPY;
+    }
+    else if(symbol.toLowerCase() == "eur"){
+        rateValue = rate.EUR;
+    }
+    else if(symbol.toLowerCase() == "gbp"){
+        rateValue = rate.GBP;
+    }
+    else if(symbol.toLowerCase() == "aud"){
         rateValue = rate.AUD;
-        session.conversationData.rates = rateValue;
     }
-
-    //console.log('Rates is : %s', rateValue);
-    //session.send("Rate is: %s", session.conversationData.rates);
+    
+    session.conversationData.rates = rateValue;
     confirmExchangeOrder(session, symbol, amount, rateValue, session.conversationData.username);
 };
 
