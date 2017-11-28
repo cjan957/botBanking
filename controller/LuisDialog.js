@@ -34,13 +34,14 @@ exports.startDialog = function (bot) {
 
     bot.dialog('help', function(session,args){
         session.send("Things you can tell me... \n\n **Show me my account summary** \n\n **I need 4000 USD for my trip**");
+        session.send("TIP: We can start over at anytime. Just type *restart* ");
         session.endDialog();
     }).triggerAction({
         matches: /^help$/i
     })
 
     bot.dialog('restart', function(session,args){
-        session.endConversation();
+        session.endConversation("OK, how can I help you?");
     }).triggerAction({
         //This will be trigger from menu options only
         matches: /^restart$/i
