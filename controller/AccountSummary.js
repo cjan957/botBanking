@@ -6,10 +6,18 @@ exports.displayAccountInfo = function getAccountInfo(session,username){
     rest.getAccount(session,url,username,handleAccountSummaryData);
 }
 
-
 exports.getAccountBalanceAndUpdateBalance = function getAccountBalance(session,username){
     var url = 'https://contosobotbankingmobile.azurewebsites.net/tables/customer';
     rest.getAccount(session,url,username,determineID);
+}
+
+function storeOrderInDB (session, id, username, currencySymbol, amountnz, amountforeign){
+    var url = 'https://contosobotbankingmobile.azurewebsites.net/tables/orders';
+    rest.storeOrder(session,url,id,username,currencySymbol,amountnz,amountforeign, confirmSuccess);
+}
+
+function confirmSuccess(session){
+    console.log('Exchange completed successfully!');
 }
 
 function determineID(message, session, username){
@@ -33,8 +41,11 @@ function determineID(message, session, username){
         
         if(currentBalance > session.conversationData.amountToDeduct + 5){
             var updatedBalance = currentBalance - (amountToDeduct + fees);
-            updatedBalance = Number(Math.round(updatedBalance+'e2')+'e-2');   
+            updatedBalance = Number(Math.round(updatedBalance+'e2')+'e-2');  
+
             rest.updateAccount(session,url,accountID,updatedBalance,displayDeductedResult);
+            storeOrderInDB(session, accountID, username, session.conversationData.currencySymbol, amountToDeduct, session.conversationData.currencyAmount);
+
             session.send("All done! You will receive an email within 5 business days when your order is ready.");
             session.send("I'm still learning and want to know what you think! Type 'feedback' anytime to send a feedback :) ");
             session.endDialog();
@@ -72,6 +83,7 @@ function handleAccountSummaryData(message, session, username) {
 
     if(found){
         accountBalance = Number(Math.round(accountBalance+'e2')+'e-2');
+        session.conversationData.firstName = firstName;
         var titleMsg = "Hi, " + firstName + "";
         var subtitleMsg = username;
         var textMsg = "Your available balance: $" + accountBalance + "";

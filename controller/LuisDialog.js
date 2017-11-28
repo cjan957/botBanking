@@ -15,12 +15,12 @@ exports.startDialog = function (bot) {
     bot.recognizer(recognizer);
 
 
-    bot.dialog('displayWelcome', function(session,args){
-        session.send("Hi! I'm TT. I can currently help you with Account Summary, Ordering Foreign Currency and Managing appointments");
+    bot.dialog('whatCanYouDo', function(session,args){
+        session.send("I can currently help you with Account Summary and ordering foreign currencies");
         session.endDialog();
     }).triggerAction({
         //This will be trigger from menu options only
-        matches: /^restartFromFailedUsername$/i
+        matches: 'whatCanYouDo'
     })
 
     bot.dialog('receipt', function(session,args){
@@ -49,6 +49,7 @@ exports.startDialog = function (bot) {
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
+
         var greetingSelector = randomNumber(0,3); //0 1 or 2
         console.log('greetingSelector is : %d', greetingSelector);
         switch(greetingSelector){
@@ -62,7 +63,12 @@ exports.startDialog = function (bot) {
                 var greetingMessage = "Nice talking to you"
                 break;
             }
+
+            if(session.conversationData.firstName){
+                greetingMessage = greetingMessage + ", "+ session.conversationData.firstName;
+            }
             session.send(greetingMessage);
+
     }).triggerAction({
         matches: 'greeting'
     });
@@ -187,9 +193,10 @@ exports.startDialog = function (bot) {
 
                     session.sendTyping();
                     account.getAccountBalanceAndUpdateBalance(session,session.conversationData.username);
+                    session.sendTyping();
                 }
                 else{
-                    session.endDialog("Ok, I cancelled your order.");
+                    session.endDialog("Ok, I cancelled your order. Anything else I can help you with?");
                 }
             }
         }

@@ -1,6 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var luis = require('./controller/LuisDialog');
+var cards = require('./controller/cardCreator');
 //var cognitive = require('./controller/CognitiveDialog');
 
 // Setup Restify Server
@@ -25,16 +26,23 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 });
 
-bot.on('conversationUpdate', function(message){
+bot.on('conversationUpdate', function(message,session){
     if(message.membersAdded){
         message.membersAdded.forEach(function(identity){
             if(identity.id === message.address.bot.id){
-                var reply = new builder.Message().address(message.address).text("Hi! I'm TT. I can currently help you with Account Summary and Ordering Foreign Currency");
-                bot.send(reply);
+                var card = cards.createHeroCard(session, null, null);
+                var respondToUser = new builder.Message(session).address(message.address).addAttachment(card);            
+                bot.send(respondToUser); 
+
+
+                //var reply = new builder.Message().address(message.address).text("Hi! I'm TT. I can currently help you with Account Summary and Ordering Foreign Currency");
+                //bot.send(reply);
             }
         });
     }
 })
+
+
 
 //bot.set('persistUserData', false);
 

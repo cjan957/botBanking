@@ -21,6 +21,32 @@ exports.getAccount = function getAccount(session, url, username, callback){
     });
 }
 
+exports.storeOrder = function storeOrder(session, url, id, username, currency, amount_nz, amount_foreign, callback){
+    var options = {
+        url: url,
+        method: 'POST',
+        headers: {
+            'ZUMO-API-VERSION': '2.0.0',
+            'Content-Type':'application/json'
+        },
+        json: { //json Payload (body)
+            "customerID" : id,
+            "usernameOrdered" : username,
+            "currency" : currency,
+            "amountNZD" : amount_nz,
+            "amountForeign" : amount_foreign
+        }
+    };
+    
+    request(options, function (error, response, body) {
+        if (!error && response.statusCode === 200) { //check if 200/ everything's ok
+            callback(session);
+        }
+        else{
+            console.log(error);
+        }
+    });
+}
 
 exports.updateAccount = function updateAccount(session,url,id,newbalance,callback){
     var options = {
