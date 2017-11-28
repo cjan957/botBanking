@@ -33,7 +33,7 @@ exports.startDialog = function (bot) {
     })
 
     bot.dialog('help', function(session,args){
-        session.send("Things you can tell me... \n\n **My Account Summary** \n\n **I want to order foreign currency**");
+        session.send("Things you can tell me... \n\n **Show me my account summary** \n\n **I need 4000 USD for my trip**");
         session.endDialog();
     }).triggerAction({
         matches: /^help$/i
@@ -283,6 +283,5 @@ exports.startDialog = function (bot) {
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max-min)) + min;
-    }
- 
+    } 
 }

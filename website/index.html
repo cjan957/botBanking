@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset= "UTF-8">
+        <title>ContosoBank - Foreign Exchange</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+        <script src="./hider.js"></script>
+        <link rel = "stylesheet" href="./style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body id ="resize">
+        <div id = "blurABLE" class = "">
+            <nav class="navbar navbar-expand-sm bg-primary navbar-dark">
+                    <a class="navbar-brand" href="">ContosoBank</a>
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="">Accounts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="">Cards</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="">KiwiSaver</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="">Insurance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">FX</a>
+                        </li>
+                        <li class="nav-item">
+                            <button id= "zoomButton" type="button" onClick = "increaseFontSize()" class="btn btn-secondary">Change Font Size</button>                                
+                        </li>
+                    </ul>
+                  </nav>
+            <div class = "jumbotron jumbotron-fluid">
+                <div class = "container">
+                    <h1 class="display-3">Foreign Exchange</h1>
+                    <br>
+                    <h6 id="subheading">You can buy/sell foreign notes and drafts in various currencies conveniently through multiple channels.</h6>
+                    <br>
+                    <button type="button" class="btn btn-primary">Order on Internet Banking</button>
+                    <button type="button" onClick = "openChat()" class="btn btn-primary">Order via BOT</button>
+                    <button type="button" class="btn btn-secondary">Find a Branch</button>                                             
+                </div>
+            </div>
+            <div class = "container">
+                <h3>Various currencies available</h3>
+                <br>
+                <h5> We buy/sell notes in 24 currencies as follows:</h5>  
+                <br>
+                <div class = "row">
+                    <div class = "col" style = "background-color:lavender;"><abbr title="Australian Dollar">AUD</abbr>*</div>
+                    <div class = "col" style = "background-color:lightblue;">GBP</div>
+                    <div class = "col" style = "background-color:lavender;">CAD</div>
+                    <div class = "col" style = "background-color:lightblue;">XPF</div>
+                    <div class = "col" style = "background-color:lavender;">CNY</div>
+                    <div class = "col" style = "background-color:lightblue;">DKK</div>
+                </div>
+                <div class = "row">
+                    <div class = "col" style = "background-color:lavender;"><abbr title="Euro">EUR</abbr>*</div>
+                    <div class = "col" style = "background-color:lightblue;">FJD</div>
+                    <div class = "col" style = "background-color:lavender;">HKD</div>
+                    <div class = "col" style = "background-color:lightblue;">INR</div>
+                    <div class = "col" style = "background-color:lavender;"><abbr title="Japanese Yen">JPY</abbr>*</div>
+                    <div class = "col" style = "background-color:lightblue;">NOK</div>
+                </div>
+                <div class = "row">
+                    <div class = "col" style = "background-color:lavender;">PHP</div>
+                    <div class = "col" style = "background-color:lightblue;">WST</div>
+                    <div class = "col" style = "background-color:lavender;">SGD</div>
+                    <div class = "col" style = "background-color:lightblue;">ZAR</div>
+                    <div class = "col" style = "background-color:lavender;">SEK</div>
+                    <div class = "col" style = "background-color:lightblue;">CHF</div>
+                </div>
+                <div class = "row">
+                    <div class = "col" style = "background-color:lavender;">THB</div>
+                    <div class = "col" style = "background-color:lightblue;">TOP</div>
+                    <div class = "col" style = "background-color:lavender;">TWD</div>
+                    <div class = "col" style = "background-color:lightblue;">AED</div>
+                    <div class = "col" style = "background-color:lavender;">RUB</div>
+                    <div class = "col" style = "background-color:lightblue;"><abbr title="United States Dollar">USD</abbr>*</div>
+                </div>
+                <p>* You can order these currencies through bot</p>
+                <br>
+                <hr>
+                <h3>Ordering Conditions</h3>
+                <br>
+                <ul>• Please place your order at least 5 days in advance.</ul>
+                <ul>• Fees and charges as set out in the table below </ul>
+                <ul>• You will need to bring a <a href="#">valid ID</a> with you when you pick up your foreign notes.</ul>
+                <ul>• The bank reserves the right to change conditions without prior notice.</ul>
+                <ul>• For more information, please contact contosoBank at (+64)9 455 4555 or visit your <a href="#">nearest branch</a></ul>
+                <br>
+                <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#feeTable">Fees Table</button>
+                <br>
+                <br>
+                <div id="feeTable" class="collapse">
+                    <table class="table">
+                        <thead>
+                        <tr> <!--TABLE ROW-->
+                            <th>Transaction Type</th> <!--TABLE HEAD-->
+                            <th>Fees</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Foreign Notes</td> <!--TABLE DATA-->
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;&nbsp;•&nbsp;Selling</td>
+                                <td>$5 per transaction</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;&nbsp;•&nbsp;Buying</td>
+                                <td>$5 per transcation</td>
+                            </tr>
+                            <tr>
+                                <td>Cheques and Drafts</td>
+                                <td></td>
+                            </tr> 
+                            <tr>
+                                <td>&nbsp;&nbsp;&nbsp;•&nbsp;Selling</td>
+                                <td>1% of the cheque value + $3 per cheque</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;&nbsp;&nbsp;•&nbsp;Buying</td>
+                                <td>$5 per cheque</td>
+                            </tr>                                                 
+                        </tbody>
+                    </table>
+            </div>
+                <hr>
+                <br>      
+            </div>
+        </div>
+
+        <div id= "chat">
+            <div id = "chatFrame" class = "hidden">
+                <iframe id = "frame" src='https://webchat.botframework.com/embed/MSAbotBanking?s=klEh1IsFPHY.cwA.MME.U-u80yv3N9Yd89TsPooRG82Ua10HUvzaksNmMEZbdH8'></iframe>
+                <button type = "button" onClick = "closeWindow()" class = "btn btn-danger btn-sm" id="closeChatButton">Close</button>
+            </div>
+        </div>
+    </body>
+
+</html>
