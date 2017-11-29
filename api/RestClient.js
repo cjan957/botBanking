@@ -10,7 +10,7 @@ exports.enquireExchange = function getExchange(session, url, symbol, amount, cal
     });
 }
 
-exports.getAccount = function getAccount(session, url, username, callback){
+exports.getDataFromDB = function getDataFromDB(session, url, username, callback){
     request.get(url,{'headers':{'ZUMO-API-VERSION': '2.0.0'}}, function getResponse(err,res,body){
         if(err){
             console.log(err);
@@ -20,6 +20,7 @@ exports.getAccount = function getAccount(session, url, username, callback){
         }
     });
 }
+
 
 exports.storeOrder = function storeOrder(session, url, id, username, currency, amount_nz, amount_foreign, callback){
     var options = {
@@ -127,4 +128,26 @@ exports.storeFeedback = function storeFB(session, url, username, message, mood, 
             console.log("soemthing wrong");
         }
     });
+}
+
+
+exports.deleteOrder = function deleteOrder(session, url, id, callback){
+    var options = {
+        url: url + "\\" + id + "?force=true",
+        method: 'DELETE',
+        headers: {
+            'ZUMO-API-VERSION': '2.0.0',
+            'Content-Type':'application/json'
+        }
+    };
+
+    request(options,function (err, res, body){
+        if(!err && res.statusCode === 200){
+            console.log(body);
+            callback(body,session,callback);
+        }else {
+            console.log(err);
+            console.log(res);
+        }
+    })
 }

@@ -4,6 +4,8 @@ var auth = require('./Authenticate');
 var account = require('./AccountSummary');
 var currencyQuery = require('./Currency');
 var text = require('./TextAnalyse');
+var cards = require('./cardCreator');
+var order = require('./CurrencyOrder');
 
 //make this function visible so that it can be called from app.js
 exports.startDialog = function (bot) {
@@ -14,27 +16,17 @@ exports.startDialog = function (bot) {
     var recognizer = new builder.LuisRecognizer('https://southeastasia.api.cognitive.microsoft.com/luis/v2.0/apps/ac73b2a7-14fe-4534-a4ec-28d8527564d2?subscription-key=38af2bf700964332a6ea1874dca72a77&spellCheck=true&timezoneOffset=0&q=')
     bot.recognizer(recognizer);
 
-
     bot.dialog('whatCanYouDo', function(session,args){
-        session.send("I can currently help you with Account Summary and ordering foreign currencies");
+        session.send("I can currently help you with Account Summary, placing and cancelling foreign currency orders.");
         session.endDialog();
     }).triggerAction({
         //This will be trigger from menu options only
         matches: 'whatCanYouDo'
     })
 
-    bot.dialog('receipt', function(session,args){
-        var card = createReceiptCard(session);
-        var responseToUser = new builder.Message(session).addAttachment(card);
-        session.send(responseToUser).endDialog();
-    }).triggerAction({
-        //This will be trigger from menu options only
-        matches: /^receipt$/i
-    })
-
     bot.dialog('help', function(session,args){
-        session.send("Things you can tell me... \n\n **Show me my account summary** \n\n **I need 4000 USD for my trip**");
-        session.send("TIP: We can start over at anytime. Just type *restart* ");
+        session.send("Things you can tell me... \n\n *• Show me my account summary* \n\n *• I need 4000 USD for my trip* \n\n *• Show my foreign currency orders* \n\n *• Cancel all my orders* \n\n *• What's your phone number*");
+        session.send("TIP: If you are stuck at any time, we can always start over. Just type *restart* ");
         session.endDialog();
     }).triggerAction({
         matches: /^help$/i
@@ -50,7 +42,6 @@ exports.startDialog = function (bot) {
     //If the intent of the message is 'welcome', the bot should greet back to the user
     bot.dialog('greeting', function (session,args){
         //TODO: Check for attachment if necessary
-
         var greetingSelector = randomNumber(0,3); //0 1 or 2
         console.log('greetingSelector is : %d', greetingSelector);
         switch(greetingSelector){
@@ -61,10 +52,9 @@ exports.startDialog = function (bot) {
                 var greetingMessage = "Hi"
                 break;
             case 2:
-                var greetingMessage = "Nice talking to you"
+                var greetingMessage = "Hi, I love talking to you"
                 break;
             }
-
             if(session.conversationData.firstName){
                 greetingMessage = greetingMessage + ", "+ session.conversationData.firstName;
             }
@@ -81,7 +71,6 @@ exports.startDialog = function (bot) {
         },
         function (session,results){
             session.conversationData.username = results.response;
-            console.log("userdata should be saved");
             session.endDialog();
         }
     ]).triggerAction({
@@ -100,15 +89,19 @@ exports.startDialog = function (bot) {
             }
         },
         function(session,args,next){
-            //session.send("Please wait while we are retrieving your account..");
             session.sendTyping();
-            account.displayAccountInfo(session,session.conversationData.username);
+            account.displayAccountInfo(session,session.conversationData.username);                                        
+            setTimeout(function(){
+                session.sendTyping();                
+            },5000);
         }
         
     ]).triggerAction({
         matches: 'accountSummary'
     });
 
+
+    //Order Currency supports waterfall steps and entities identifications
     bot.dialog('orderCurrency', [
         function(session,args,next){
             session.dialogData.args = args || {};
@@ -118,8 +111,7 @@ exports.startDialog = function (bot) {
             else{
                 next();
             }
-        },
-        
+        },    
         function (session,args,next){
             var currency = builder.EntityRecognizer.findEntity(session.dialogData.args.intent.entities, 'builtin.currency');
 
@@ -150,7 +142,8 @@ exports.startDialog = function (bot) {
                     next();
                 }
                 else if(currencyInfo.currency_symbol != null){
-                    session.endDialog("I'm sorry but " +  currencyInfo.currency_symbol + " is not currently supported here. Please order it on our internet banking site");
+                    session.send("I'm sorry but " +  currencyInfo.currency_symbol + " is not currently supported here. Please order it on our internet banking site");
+                    session.endDialog("Supported currencies are: US Dollar,Japanese Yen,Euro and Australian Dollar");
                 }
             }
         },
@@ -162,7 +155,6 @@ exports.startDialog = function (bot) {
             var unit = currencyInfo.currency_symbol;
             if(!currencyInfo.currency_amount){
                 session.beginDialog('askHowMuch');
-                //builder.Prompts.text(session,'OK, how much do you need?');
             }
             else{
                 next();
@@ -201,7 +193,6 @@ exports.startDialog = function (bot) {
                 }
             }
         }
-
     ]).triggerAction({
         matches:'orderCurrency',
         confirmPrompt: "This will cancel the ordering of currency process. Are you sure?"
@@ -232,12 +223,12 @@ exports.startDialog = function (bot) {
     bot.dialog('askForCurrency', [
         function (session,args,next){
             builder.Prompts.text(session, "Please select a currency from the menu");
-            var card = createThumbnailCard(session, "What currency do you want?");
+            var card = cards.createThumbnailCard(session, "What currency do you want?");
             var respondToUser = new builder.Message(session).addAttachment(card);            
             session.send(respondToUser);            
         },
         function (session, results){
-            if(results.response == "AUD" || results.response == "EUR" || results.response == "JPY" || results.response == "USD"){
+            if(results.response.toLowerCase() == "aud" || results.response.toLowerCase() == "eur" || results.response.toLowerCase() == "jpy" || results.response.toLowerCase() == "usd"){
                 session.endDialogWithResult(results);   
             }
             else{
@@ -249,6 +240,52 @@ exports.startDialog = function (bot) {
     bot.dialog('askCurrency_Help', function(session,args,next){
         var msg = "Want something other than AUD, EUR, JPY or USD? Please use our internet banking to place your order.";
         session.endDialog(msg);
+    })
+
+
+    bot.dialog('cancelOrders', [
+        function(session,args,next){
+            if(!session.conversationData.username){
+                console.log(session.conversationData.username);
+                session.beginDialog('authenticate');
+            }
+            else{
+                next();
+            }
+        },
+        function (session,results){
+            builder.Prompts.confirm(session, "Are you sure you want to cancel ALL of your orders? Type 'Yes' to confirm. To individually cancel your order, please contact our support team");
+        },
+        function(session,results){
+            var userConfirmation = results.response; //returns true or false
+            if(userConfirmation){
+                session.send("Cancelling all your orders...")
+                order.cancelOrders(session, session.conversationData.username);
+                session.send("All orders have been cancelled! Anything I can help you with?")
+            }
+            else{
+                session.send("OK, I won't cancel them. Anything else I can help you with?");
+            }
+        }
+    ]).triggerAction({
+        matches: 'cancelOrders'
+    })
+
+    bot.dialog('getOrder',[
+        function(session,args,next){
+            if(!session.conversationData.username){
+                console.log(session.conversationData.username);
+                session.beginDialog('authenticate');
+            }
+            else{
+                next();
+            }
+        },
+        function(session,results){
+            order.getOrders(session,session.conversationData.username);
+        }
+    ]).triggerAction({
+        matches: 'getOrder'
     })
 
 
@@ -275,16 +312,11 @@ exports.startDialog = function (bot) {
         matches: /^feedback$/i
     })
 
-    function createThumbnailCard(session, cardTitle){
-        return new builder.ThumbnailCard(session)
-            .title(cardTitle)
-            .buttons([
-                builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)"),
-                builder.CardAction.imBack(session,"EUR","Euro (EUR)"),
-                builder.CardAction.imBack(session,"JPY","Japanese Yen (JPY)"),                
-                builder.CardAction.imBack(session,"USD","US Dollar (USD)")        
-            ]);
-    }
+    bot.dialog('contact', function(session,args){
+        session.endDialog("Our phone number is 0800 455 4555, email: botsupport@contoso.co.nz");
+    }).triggerAction({
+        matches: 'contact'
+    })
 
     //random integer generator
     function randomNumber(min,max){
