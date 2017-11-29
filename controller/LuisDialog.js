@@ -309,7 +309,8 @@ exports.startDialog = function (bot) {
             }
         } 
     ]).triggerAction({
-        matches: /^feedback$/i
+        matches: /^feedback$/i,
+        confirmPrompt: "I'm a bit confused, please try rephase your comment a bit. Do you still want to give me a feedback?"
     })
 
     bot.dialog('contact', function(session,args){
