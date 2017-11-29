@@ -222,8 +222,8 @@ exports.startDialog = function (bot) {
 
     bot.dialog('askForCurrency', [
         function (session,args,next){
-            builder.Prompts.text(session, "Pick a currency");
-            var card = cards.createThumbnailCard(session, "What currency do you want?");
+            builder.Prompts.text(session, "Please select a currency from the menu");
+            var card = cards.createThumbnailCard(session, "Pick a currency");
             var respondToUser = new builder.Message(session).addAttachment(card);            
             session.send(respondToUser);            
         },
