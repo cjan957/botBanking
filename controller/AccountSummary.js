@@ -33,7 +33,7 @@ function handleAccountSummaryData(message, session, username) {
         pushInfoToCard(session, titleMsg, subtitleMsg, textMsg, imageUrl);
     }
     else{
-        session.send("The username you provided could not be found");
+        session.send("The contosoID you provided could not be found");
         session.endConversation("For security reason, you will need to start over");
     }    
 }
@@ -88,7 +88,7 @@ function completingTransaction(message, session, username){
         }
     }
     else{
-        session.send("The username you provided could not be found");
+        session.send("The contosoID you provided could not be found");
         session.endConversation("For security reason, you will need to start over");
     }
 }

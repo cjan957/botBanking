@@ -65,7 +65,7 @@ exports.startDialog = function (bot) {
 
     bot.dialog('authenticate',[
         function (session){
-            builder.Prompts.text(session, "Please enter your username to continue");
+            builder.Prompts.text(session, "Please enter your contosoID to continue");
         },
         function (session,results){
             session.conversationData.username = results.response;
