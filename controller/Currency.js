@@ -44,8 +44,8 @@ function confirmExchangeOrder(session, symbol, amount, rateValue, username){
     amountToDeductPlusFee = amountToDeduct + 5;
     amountToDeductPlusFee = Number(Math.round(amountToDeductPlusFee+'e2')+'e-2');
     session.conversationData.amountToDeduct = amountToDeduct;
-    var message = "**Currency:** " + symbol + " \n\n **Amount to Order:** " + amount + " \n\n *Today's Exchange Rate:* " + rateValue + "\n\n --- \n\n **Amount in NZD:** $"+ amountToDeduct +" \n\n **Fees:** $5 \n\n --- \n\n **Total:** $" + (amountToDeductPlusFee) +"\n\n";
-    var card = createThumbnailCard(session, "Order Confirmation", "It will take **5 business days** for your order to be ready", message, imageURL);
+    var message = "Currency: " + symbol + " \n\n Amount to Order: " + amount + " \n\n Today's Exchange Rate:  " + rateValue + "\n\n --- \n\n Amount in NZD: $"+ amountToDeduct +" \n\n Fees: $5 \n\n --- \n\n Total: $" + (amountToDeductPlusFee) +"\n\n";
+    var card = createThumbnailCard(session, "Order Confirmation", "It will take 5 business days for your order to be ready", message, imageURL);
     var respondToUser = new builder.Message(session).addAttachment(card);
     session.send(respondToUser);
 }
