@@ -16,7 +16,6 @@ exports.createThumbnailCard = function currenciesChoices(session, cardTitle){
         .buttons([
             builder.CardAction.imBack(session,"AUD","Australian Dollar (AUD)"),
             builder.CardAction.imBack(session,"EUR","Euro (EUR)"),
-            builder.CardAction.imBack(session,"JPY","Japanese Yen (JPY)"),                
             builder.CardAction.imBack(session,"USD","US Dollar (USD)")        
         ]);
 }

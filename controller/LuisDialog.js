@@ -141,7 +141,7 @@ exports.startDialog = function (bot) {
                 }
                 else if(currencyInfo.currency_symbol != null){
                     session.send("I'm sorry but " +  currencyInfo.currency_symbol + " is not currently supported here. Please order it on our internet banking site");
-                    session.endDialog("Supported currencies are: US Dollar,Japanese Yen,Euro and Australian Dollar");
+                    session.endDialog("Supported currencies are: US Dollar, Euro and Australian Dollar");
                 }
             }
         },
