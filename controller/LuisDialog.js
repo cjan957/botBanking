@@ -236,7 +236,7 @@ exports.startDialog = function (bot) {
     ]).beginDialogAction('askCurrencyHelpAction', 'askCurrency_Help', {matches: /^help$/i});
 
     bot.dialog('askCurrency_Help', function(session,args,next){
-        var msg = "Want something other than AUD, EUR, JPY or USD? Please use our internet banking to place your order.";
+        var msg = "Want something other than AUD, EUR or USD? Please use our internet banking to place your order.";
         session.endDialog(msg);
     })
 
