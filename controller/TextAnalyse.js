@@ -28,9 +28,9 @@ function storeToDB (session, body, message, username){
 function confirmFeedbackReceived(session, mood){
     console.log("last step of feedback");
     if(mood == 0){
-        session.send("I'm sorry that I wasn't so helpful. Your feedback will help me improve in the future! Thanks");
+        session.endDialog("I'm sorry that I wasn't so helpful. Your feedback will help me improve in the future! Thanks");
     }
     else if(mood == 1){
-        session.send("Thank you for your feedback! I'm always happy to help");
+        session.endDialog("Thank you for your feedback! I'm always happy to help");
     }
 }
